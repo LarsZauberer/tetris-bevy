@@ -3,7 +3,9 @@ use bevy::prelude::*;
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
+        .insert_resource(GameTick {time_elapsed: 0})
         .add_systems(Startup, setup)
+        .add_systems(Update, test)
         .run();
 }
 
@@ -32,4 +34,14 @@ fn hex_color(hex: i32) -> Color {
 
     Color::srgb(red, green, blue)
 }
+
+#[derive(Resource)]
+struct GameTick {
+    time_elapsed: usize,
+}
+
+fn test(mut ticker: ResMut<GameTick>, time: Res<Time>) {
+    let delta: usize = time.delta().as_millis() as usize;
+    ticker.time_elapsed = ticker.time_elapsed + delta;
+    println!("{}", ticker.time_elapsed);
 }
