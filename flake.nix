@@ -22,6 +22,7 @@
         buildInputs = with pkgs; [
           cargo
           rustc
+          rust-analyzer
 
           pkg-config
           udev
