@@ -1,15 +1,16 @@
 use bevy::prelude::*;
 
 const UNIT: f32 = 50.0;
+const WIDTH: f32 = 10.0;
+const HEIGHT: f32 = 20.0;
+const EMPTY_COLOR: i32 = 0x2b2b2b;
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins,))
-        .insert_resource(GameTick {time_elapsed: 0})
-        .insert_resource(World {grid: [[BlockType::No; 10]; 20]})
+        .insert_resource(World::new())
         .add_systems(Startup, setup)
-        .add_systems(Update, test)
-        .add_systems(Update, grid_renderer)
+        .add_systems(Update, tile_update)
         .run();
 }
 
@@ -18,46 +19,23 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut window: Single<&mut Window>,
-    mut world: ResMut<World>,
+    world: ResMut<World>,
 ) {
     window.resolution.set(UNIT * 10.0, UNIT * 20.0);
 
-    // Debug Borders
-    world.grid[0][0] = BlockType::I;
-    world.grid[0][1] = BlockType::T;
-    world.grid[19][0] = BlockType::J;
-    world.grid[19][9] = BlockType::T;
-    world.grid[0][9] = BlockType::L;
-
     commands.spawn(Camera2d);
 
-    for (i, y) in world.grid.into_iter().enumerate() {
-        for (j, x) in y.into_iter().enumerate() {
-            let color = match x {
-                BlockType::I => hex_color(0x00ffff),
-                BlockType::J => hex_color(0x0000ff),
-                BlockType::L => hex_color(0xff7f00),
-                BlockType::O => hex_color(0xffff00),
-                BlockType::S => hex_color(0x00ff00),
-                BlockType::Z => hex_color(0xff0000),
-                BlockType::T => hex_color(0x800080),
-                BlockType::No => hex_color(0x2b2b2b),
-            };
-
-            let (a, b) = compute_grid_coordinate(j, i);
+    for x in 0..WIDTH as usize {
+        for y in 0..HEIGHT as usize {
+            let (a, b) = compute_grid_coordinate(x, y);
             commands.spawn((
                 Mesh2d(meshes.add(Rectangle::new(UNIT, UNIT))),
-                MeshMaterial2d(materials.add(color)),
+                MeshMaterial2d(materials.add(hex_color(EMPTY_COLOR))),
                 Transform::from_xyz(a, b, 0.0),
+                TileComponent { x, y },
             ));
         }
     }
-
-    commands.spawn((
-        Mesh2d(meshes.add(Circle::new(1.0))),
-        MeshMaterial2d(materials.add(hex_color(0xff0000))),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-    ));
 }
 
 fn hex_color(hex: i32) -> Color {
@@ -72,21 +50,14 @@ fn hex_color(hex: i32) -> Color {
 }
 
 fn compute_grid_coordinate(x: usize, y: usize) -> (f32, f32) {
-   (UNIT / 2.0 + UNIT * x as f32 - UNIT * 10.0 / 2.0, UNIT / 2.0 + UNIT * y as f32 - UNIT * 20.0 / 2.0)
-}
-
-#[derive(Resource)]
-struct GameTick {
-    time_elapsed: usize,
-}
-
-#[derive(Resource)]
-struct World {
-    grid: [[BlockType; 10]; 20]
+    (
+        UNIT / 2.0 + UNIT * x as f32 - UNIT * 10.0 / 2.0,
+        UNIT / 2.0 - UNIT * y as f32 + UNIT * 20.0 / 2.0 - UNIT,
+    )
 }
 
 #[derive(Copy, Clone)]
-enum BlockType {
+enum TileType {
     I,
     J,
     L,
@@ -97,16 +68,43 @@ enum BlockType {
     No,
 }
 
-fn test(mut ticker: ResMut<GameTick>, time: Res<Time>) {
-    let delta: usize = time.delta().as_millis() as usize;
-    ticker.time_elapsed = ticker.time_elapsed + delta;
-    println!("{}", ticker.time_elapsed);
+#[derive(Resource)]
+struct World {
+    grid: [[TileType; 10]; 20],
 }
 
-fn grid_renderer(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+impl World {
+    fn new() -> Self {
+        Self {
+            grid: [[TileType::No; WIDTH as usize]; HEIGHT as usize],
+        }
+    }
+}
+
+#[derive(Component)]
+struct TileComponent {
+    x: usize,
+    y: usize,
+}
+
+fn tile_update(
+    mut query: Query<(&mut MeshMaterial2d<ColorMaterial>, &TileComponent)>,
     world: Res<World>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    query.iter_mut().for_each(|(mut mat, tile)| {
+        let tile: TileType = world.grid[tile.y][tile.x];
+        let color = match tile {
+            TileType::I => hex_color(0x00ffff),
+            TileType::J => hex_color(0x0000ff),
+            TileType::L => hex_color(0xff7f00),
+            TileType::O => hex_color(0xffff00),
+            TileType::S => hex_color(0x00ff00),
+            TileType::Z => hex_color(0xff0000),
+            TileType::T => hex_color(0x800080),
+            TileType::No => hex_color(EMPTY_COLOR),
+        };
+        let material = materials.get_mut(mat.id()).unwrap();
+        material.color = color;
+    });
 }

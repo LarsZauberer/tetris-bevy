@@ -23,6 +23,7 @@
           cargo
           rustc
           rust-analyzer
+          rustfmt
 
           pkg-config
           udev
