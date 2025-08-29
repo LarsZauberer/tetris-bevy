@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::constants::{HEIGHT, UNIT, WIDTH};
+use crate::constants::{HEIGHT, SPAWNLOCATION, UNIT, WIDTH};
 use crate::resources::World;
 
 /// This is a helper function that can convert a hex encoded i32 to a bevy Color
@@ -26,7 +26,7 @@ pub fn compute_grid_coordinate(x: usize, y: usize) -> (f32, f32) {
 
 /// Enum for all the different types a tile could be
 /// This basically maps to color
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum BlockType {
     I,
     J,
@@ -61,7 +61,7 @@ pub struct CurrentBlock {
 impl CurrentBlock {
     pub fn new(kind: BlockType) -> Self {
         Self {
-            location: (4, 0),
+            location: SPAWNLOCATION,
             kind,
         }
     }
@@ -116,4 +116,26 @@ pub fn fill(
         let y = off_y + b;
         world.grid[y as usize][x as usize] = filler;
     }
+}
+
+/// Checks if the move position of the block is legal
+pub fn valid_position(world: &World, locs: &[(i32, i32)], (off_x, off_y): (i32, i32)) -> bool {
+    for (a, b) in locs {
+        let x = off_x + a;
+        let y = off_y + b;
+
+        if x < 0 || x >= WIDTH as i32 {
+            return false;
+        }
+        if y >= HEIGHT as i32 {
+            // We don't do any height checking (above is infinite space)
+            return false;
+        }
+
+        if y >= 0 && world.grid[y as usize][x as usize] != BlockType::No {
+            // Bound check here is still needed
+            return false;
+        }
+    }
+    return true;
 }

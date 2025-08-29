@@ -2,7 +2,9 @@ use bevy::prelude::*;
 use tetris_bevy::components::TileComponent;
 use tetris_bevy::constants::{HEIGHT, TICKSPEED, UNIT, WIDTH};
 use tetris_bevy::resources::{GameTick, World};
-use tetris_bevy::utils::{BlockType, compute_grid_coordinate, fill, get_locations};
+use tetris_bevy::utils::{
+    BlockType, CurrentBlock, compute_grid_coordinate, fill, get_locations, valid_position,
+};
 
 fn main() {
     let mut app = App::new();
@@ -53,7 +55,12 @@ fn tile_update(
     });
 }
 
-fn game_loop(mut world: ResMut<World>, mut ticker: ResMut<GameTick>, time: Res<Time>) {
+fn game_loop(
+    mut world: ResMut<World>,
+    mut ticker: ResMut<GameTick>,
+    time: Res<Time>,
+    keys: Res<ButtonInput<KeyCode>>,
+) {
     if ticker.0.tick(time.delta()).just_finished() {
         let locations = get_locations(world.current.kind);
         let offset = world.current.location;
@@ -65,6 +72,21 @@ fn game_loop(mut world: ResMut<World>, mut ticker: ResMut<GameTick>, time: Res<T
         let locations = get_locations(world.current.kind);
         let offset = world.current.location;
         let kind = world.current.kind;
-        fill(&mut world, locations, offset, kind);
+        if valid_position(&world, &locations, offset) {
+            // Continue falling
+            fill(&mut world, locations, offset, kind);
+        } else {
+            // Freeze the block
+            world.current.location.1 -= 1;
+
+            // Redraw the block
+            let locations = get_locations(world.current.kind);
+            let offset = world.current.location;
+            let kind = world.current.kind;
+            fill(&mut world, locations, offset, kind);
+
+            // Remove the object form the falling
+            world.current = CurrentBlock::new(BlockType::I);
+        }
     }
 }
