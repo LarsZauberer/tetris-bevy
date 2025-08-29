@@ -67,6 +67,7 @@ impl CurrentBlock {
     }
 }
 
+/// Returns all the basic positions in relation to the origin point of a block
 pub fn get_locations(kind: BlockType) -> Vec<(i32, i32)> {
     match kind {
         BlockType::I => {
@@ -96,6 +97,7 @@ pub fn get_locations(kind: BlockType) -> Vec<(i32, i32)> {
     }
 }
 
+/// Fills all the tiles at the locations with the origin offset with the given filler block type
 pub fn fill(
     world: &mut World,
     locs: Vec<(i32, i32)>,
@@ -112,7 +114,6 @@ pub fn fill(
 
         let x = off_x + a;
         let y = off_y + b;
-        println!("Filling: ({}, {}) with {:?}", x, y, filler);
         world.grid[y as usize][x as usize] = filler;
     }
 }
