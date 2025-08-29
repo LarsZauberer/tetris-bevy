@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use bevy::prelude::*;
 use tetris_bevy::components::TileComponent;
 use tetris_bevy::constants::{HEIGHT, TICKSPEED, UNIT, WIDTH};
@@ -119,5 +117,35 @@ fn game_loop(
         let offset = world.current.location;
         let kind = world.current.kind;
         fill(&mut world, locations, offset, kind);
+    }
+
+    // Smash down
+    if keys.just_pressed(KeyCode::Space) {
+        // Remove the old position
+        let locations = get_locations(world.current.kind);
+        let offset = world.current.location;
+        fill(&mut world, locations, offset, BlockType::No);
+
+        let mut locations = get_locations(world.current.kind);
+        let mut offset = world.current.location;
+        while valid_position(&world, &locations, offset) {
+            // Go down until you have reached an invalid position
+            world.current.location.1 += 1;
+
+            locations = get_locations(world.current.kind);
+            offset = world.current.location;
+        }
+
+        // Redraw
+        world.current.location.1 -= 1;
+
+        // Smashed down
+        let locations = get_locations(world.current.kind);
+        let offset = world.current.location;
+        let kind = world.current.kind;
+        fill(&mut world, locations, offset, kind);
+
+        // Replace
+        world.current = CurrentBlock::new(BlockType::J);
     }
 }
