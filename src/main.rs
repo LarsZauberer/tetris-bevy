@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use bevy::prelude::*;
 use tetris_bevy::components::TileComponent;
 use tetris_bevy::constants::{HEIGHT, TICKSPEED, UNIT, WIDTH};
@@ -88,5 +90,34 @@ fn game_loop(
             // Remove the object form the falling
             world.current = CurrentBlock::new(BlockType::I);
         }
+    }
+
+    let locations = get_locations(world.current.kind);
+    let offset = world.current.location;
+    fill(&mut world, locations, offset, BlockType::No);
+
+    let mut undo = 0;
+
+    if keys.just_pressed(KeyCode::ArrowLeft) {
+        world.current.location.0 -= 1;
+        undo += 1;
+    } else if keys.just_pressed(KeyCode::ArrowRight) {
+        world.current.location.0 += 1;
+        undo -= 1;
+    }
+
+    let locations = get_locations(world.current.kind);
+    let offset = world.current.location;
+    let kind = world.current.kind;
+    if valid_position(&world, &locations, offset) {
+        fill(&mut world, locations, offset, kind);
+    } else {
+        // Undo changes
+        world.current.location.0 += undo;
+
+        let locations = get_locations(world.current.kind);
+        let offset = world.current.location;
+        let kind = world.current.kind;
+        fill(&mut world, locations, offset, kind);
     }
 }
