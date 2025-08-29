@@ -148,4 +148,30 @@ fn game_loop(
         // Replace
         world.current = CurrentBlock::new(BlockType::J);
     }
+
+    // Check Row finished
+    for y in 0..HEIGHT as usize {
+        let mut could_be = true;
+        for x in 0..WIDTH as usize {
+            if world.grid[y][x] == BlockType::No {
+                could_be = false;
+            }
+        }
+        if could_be {
+            // Row is cleared
+
+            // Remove the row
+            for x in 0..WIDTH as usize {
+                world.grid[y][x] = BlockType::No;
+            }
+
+            // Remove all the rows above
+            for i in 1..(y + 1) {
+                let row = y - i;
+                for x in 0..WIDTH as usize {
+                    world.grid[row + 1][x] = world.grid[row][x];
+                }
+            }
+        }
+    }
 }

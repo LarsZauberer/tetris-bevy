@@ -62,7 +62,7 @@ impl CurrentBlock {
     pub fn new(kind: BlockType) -> Self {
         Self {
             location: SPAWNLOCATION,
-            kind,
+            kind: BlockType::I,
         }
     }
 }
