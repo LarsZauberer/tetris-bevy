@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::constants::{HEIGHT, SPAWNLOCATION, UNIT, WIDTH};
+use crate::constants::{CUTOFF, HEIGHT, SPAWNLOCATION, UNIT, WIDTH};
 use crate::resources::World;
 
 /// This is a helper function that can convert a hex encoded i32 to a bevy Color
@@ -138,4 +138,38 @@ pub fn valid_position(world: &World, locs: &[(i32, i32)], (off_x, off_y): (i32, 
         }
     }
     return true;
+}
+
+pub fn check_game_over(world: &World) -> bool {
+    !world.grid[CUTOFF as usize]
+        .iter()
+        .all(|x| x == &BlockType::No)
+}
+
+pub fn row_clearing(world: &mut World) {
+    // Check Row finished
+    for y in 0..HEIGHT as usize {
+        let mut could_be = true;
+        for x in 0..WIDTH as usize {
+            if world.grid[y][x] == BlockType::No {
+                could_be = false;
+            }
+        }
+        if could_be {
+            // Row is cleared
+
+            // Remove the row
+            for x in 0..WIDTH as usize {
+                world.grid[y][x] = BlockType::No;
+            }
+
+            // Remove all the rows above
+            for i in 1..(y + 1) {
+                let row = y - i;
+                for x in 0..WIDTH as usize {
+                    world.grid[row + 1][x] = world.grid[row][x];
+                }
+            }
+        }
+    }
 }

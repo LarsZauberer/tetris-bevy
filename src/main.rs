@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use tetris_bevy::components::TileComponent;
-use tetris_bevy::constants::{HEIGHT, TICKSPEED, UNIT, WIDTH};
+use tetris_bevy::constants::{CUTOFF, HEIGHT, TICKSPEED, UNIT, WIDTH};
 use tetris_bevy::resources::{GameTick, World};
 use tetris_bevy::utils::{
-    BlockType, CurrentBlock, compute_grid_coordinate, fill, get_locations, valid_position,
+    BlockType, CurrentBlock, check_game_over, compute_grid_coordinate, fill, get_locations,
+    hex_color, row_clearing, valid_position,
 };
 
 fn main() {
@@ -41,6 +42,13 @@ fn setup(
             ));
         }
     }
+
+    let (a, b) = compute_grid_coordinate((WIDTH / 2.0).round() as usize, CUTOFF + 1);
+    commands.spawn((
+        Mesh2d(meshes.add(Rectangle::new(WIDTH * UNIT, 1.0))),
+        MeshMaterial2d(materials.add(hex_color(0xff0000))),
+        Transform::from_xyz(a - UNIT / 2.0, b + UNIT / 2.0, 0.0),
+    ));
 }
 
 fn tile_update(
@@ -60,6 +68,7 @@ fn game_loop(
     mut ticker: ResMut<GameTick>,
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
+    mut exit: EventWriter<AppExit>,
 ) {
     if ticker.0.tick(time.delta()).just_finished() {
         let locations = get_locations(world.current.kind);
@@ -84,6 +93,15 @@ fn game_loop(
             let offset = world.current.location;
             let kind = world.current.kind;
             fill(&mut world, locations, offset, kind);
+
+            // Check Row Clearing
+            row_clearing(&mut world);
+
+            // Check Game Over
+            if check_game_over(&world) {
+                println!("Game Over!");
+                exit.send(AppExit::Success);
+            }
 
             // Remove the object form the falling
             world.current = CurrentBlock::new(BlockType::I);
@@ -145,33 +163,16 @@ fn game_loop(
         let kind = world.current.kind;
         fill(&mut world, locations, offset, kind);
 
+        // Check Row Clearing
+        row_clearing(&mut world);
+
+        // Check Game Over
+        if check_game_over(&world) {
+            println!("Game Over!");
+            exit.send(AppExit::Success);
+        }
+
         // Replace
         world.current = CurrentBlock::new(BlockType::J);
-    }
-
-    // Check Row finished
-    for y in 0..HEIGHT as usize {
-        let mut could_be = true;
-        for x in 0..WIDTH as usize {
-            if world.grid[y][x] == BlockType::No {
-                could_be = false;
-            }
-        }
-        if could_be {
-            // Row is cleared
-
-            // Remove the row
-            for x in 0..WIDTH as usize {
-                world.grid[y][x] = BlockType::No;
-            }
-
-            // Remove all the rows above
-            for i in 1..(y + 1) {
-                let row = y - i;
-                for x in 0..WIDTH as usize {
-                    world.grid[row + 1][x] = world.grid[row][x];
-                }
-            }
-        }
     }
 }

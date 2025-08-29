@@ -7,7 +7,7 @@ use bevy::prelude::*;
 /// The World keeps track of what type which tiles are.
 #[derive(Resource)]
 pub struct World {
-    pub grid: [[BlockType; 10]; 20],
+    pub grid: [[BlockType; WIDTH as usize]; HEIGHT as usize],
     pub current: CurrentBlock,
 }
 
