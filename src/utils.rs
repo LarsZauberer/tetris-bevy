@@ -59,10 +59,22 @@ pub struct CurrentBlock {
 }
 
 impl CurrentBlock {
-    pub fn new(kind: BlockType) -> Self {
+    pub fn new() -> Self {
+        let i: usize = rand::random_range(0..7);
+
+        let options = [
+            BlockType::I,
+            BlockType::J,
+            BlockType::L,
+            BlockType::O,
+            BlockType::S,
+            BlockType::Z,
+            BlockType::T,
+        ];
+
         Self {
             location: SPAWNLOCATION,
-            kind: BlockType::I,
+            kind: options[i],
         }
     }
 }

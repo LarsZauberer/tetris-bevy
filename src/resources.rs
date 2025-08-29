@@ -15,7 +15,7 @@ impl World {
     pub fn new() -> Self {
         Self {
             grid: [[BlockType::No; WIDTH as usize]; HEIGHT as usize],
-            current: CurrentBlock::new(BlockType::L),
+            current: CurrentBlock::new(),
         }
     }
 }

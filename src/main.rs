@@ -100,11 +100,11 @@ fn game_loop(
             // Check Game Over
             if check_game_over(&world) {
                 println!("Game Over!");
-                exit.send(AppExit::Success);
+                exit.write(AppExit::Success);
             }
 
             // Remove the object form the falling
-            world.current = CurrentBlock::new(BlockType::I);
+            world.current = CurrentBlock::new();
         }
     }
 
@@ -169,10 +169,10 @@ fn game_loop(
         // Check Game Over
         if check_game_over(&world) {
             println!("Game Over!");
-            exit.send(AppExit::Success);
+            exit.write(AppExit::Success);
         }
 
         // Replace
-        world.current = CurrentBlock::new(BlockType::J);
+        world.current = CurrentBlock::new();
     }
 }
