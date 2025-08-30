@@ -80,19 +80,19 @@ pub enum Rotation {
 impl Rotation {
     pub fn rot_left(&self) -> Self {
         match self {
-            Rotation::Rot0 => Rotation::Rot90,
-            Rotation::Rot90 => Rotation::Rot180,
-            Rotation::Rot180 => Rotation::Rot270,
-            Rotation::Rot270 => Rotation::Rot0,
+            Rotation::Rot0 => Rotation::Rot270,
+            Rotation::Rot90 => Rotation::Rot0,
+            Rotation::Rot180 => Rotation::Rot90,
+            Rotation::Rot270 => Rotation::Rot180,
         }
     }
 
     pub fn rot_right(&self) -> Self {
         match self {
-            Rotation::Rot0 => Rotation::Rot270,
-            Rotation::Rot90 => Rotation::Rot0,
-            Rotation::Rot180 => Rotation::Rot90,
-            Rotation::Rot270 => Rotation::Rot180,
+            Rotation::Rot0 => Rotation::Rot90,
+            Rotation::Rot90 => Rotation::Rot180,
+            Rotation::Rot180 => Rotation::Rot270,
+            Rotation::Rot270 => Rotation::Rot0,
         }
     }
 }
