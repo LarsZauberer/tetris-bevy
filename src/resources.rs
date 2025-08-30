@@ -3,6 +3,7 @@ use crate::{
     utils::{BlockType, CurrentBlock},
 };
 use bevy::prelude::*;
+use std::fmt;
 
 /// The World keeps track of what type which tiles are.
 #[derive(Resource)]
@@ -17,6 +18,18 @@ impl World {
             grid: [[BlockType::No; WIDTH as usize]; HEIGHT as usize],
             current: CurrentBlock::new(),
         }
+    }
+}
+
+impl fmt::Display for World {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for row in &self.grid {
+            for block in row {
+                write!(f, "{}", block)?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
     }
 }
 
