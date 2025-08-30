@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::fmt;
 
 use crate::constants::{CUTOFF, HEIGHT, SPAWNLOCATION, UNIT, WIDTH};
 use crate::resources::World;
@@ -53,8 +54,52 @@ impl BlockType {
     }
 }
 
+impl fmt::Display for BlockType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let character = match self {
+            BlockType::I => 'I',
+            BlockType::J => 'J',
+            BlockType::L => 'L',
+            BlockType::O => 'O',
+            BlockType::S => 'S',
+            BlockType::Z => 'Z',
+            BlockType::T => 'T',
+            BlockType::No => ' ',
+        };
+        write!(f, "{}", character)
+    }
+}
+
+pub enum Rotation {
+    Rot0,
+    Rot90,
+    Rot180,
+    Rot270,
+}
+
+impl Rotation {
+    pub fn rot_left(&self) -> Self {
+        match self {
+            Rotation::Rot0 => Rotation::Rot90,
+            Rotation::Rot90 => Rotation::Rot180,
+            Rotation::Rot180 => Rotation::Rot270,
+            Rotation::Rot270 => Rotation::Rot0,
+        }
+    }
+
+    pub fn rot_right(&self) -> Self {
+        match self {
+            Rotation::Rot0 => Rotation::Rot270,
+            Rotation::Rot90 => Rotation::Rot0,
+            Rotation::Rot180 => Rotation::Rot90,
+            Rotation::Rot270 => Rotation::Rot180,
+        }
+    }
+}
+
 pub struct CurrentBlock {
     pub location: (i32, i32),
+    pub rotation: Rotation,
     pub kind: BlockType,
 }
 
@@ -74,6 +119,7 @@ impl CurrentBlock {
 
         Self {
             location: SPAWNLOCATION,
+            rotation: Rotation::Rot0,
             kind: options[i],
         }
     }
@@ -183,5 +229,49 @@ pub fn row_clearing(world: &mut World) {
                 }
             }
         }
+    }
+}
+
+/// Rotates the given positions using 2D rotation matrix calculations
+///
+/// Rotation matrices:
+/// 0°:   [1,  0; 0,  1]  -> (x, y) = (x, y)
+/// 90°:  [0, -1; 1,  0]  -> (x, y) = (-y, x)
+/// 180°: [-1, 0; 0, -1]  -> (x, y) = (-x, -y)
+/// 270°: [0,  1; -1, 0]  -> (x, y) = (y, -x)
+pub fn get_rotation(
+    positions: &[(i32, i32)],
+    rotation: &Rotation,
+    kind: &BlockType,
+) -> Vec<(i32, i32)> {
+    match kind {
+        BlockType::I => match rotation {
+            Rotation::Rot0 => positions.into(),
+            Rotation::Rot90 => vec![(0, 0), (1, 0), (-2, 0), (-1, 0)],
+            Rotation::Rot180 => vec![(-1, -1), (-1, 0), (-1, 1), (-1, 2)],
+            Rotation::Rot270 => vec![(-2, 1), (-1, 1), (0, 1), (1, 1)],
+        },
+        BlockType::O => positions.into(),
+        _ => positions
+            .iter()
+            .map(|&(x, y)| match rotation {
+                Rotation::Rot0 => {
+                    // Matrix: [1, 0; 0, 1] * [x; y] = [1*x + 0*y; 0*x + 1*y]
+                    (x, y)
+                }
+                Rotation::Rot90 => {
+                    // Matrix: [0, -1; 1, 0] * [x; y] = [0*x + (-1)*y; 1*x + 0*y]
+                    (-y, x)
+                }
+                Rotation::Rot180 => {
+                    // Matrix: [-1, 0; 0, -1] * [x; y] = [(-1)*x + 0*y; 0*x + (-1)*y]
+                    (-x, -y)
+                }
+                Rotation::Rot270 => {
+                    // Matrix: [0, 1; -1, 0] * [x; y] = [0*x + 1*y; (-1)*x + 0*y]
+                    (y, -x)
+                }
+            })
+            .collect(),
     }
 }
